@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,13 +10,13 @@ import {
   View,
 } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppData } from '@/context/AppDataContext';
 import { useTheme } from '@/hooks/useTheme';
 import { GOAL_ICONS } from '@/lib/goalIcons';
-import { formatDate } from '@/lib/date';
+import { DateField } from '@/components/DateField';
+import { confirmDestructive, showAlert } from '@/lib/dialog';
 
 export default function GoalFormScreen() {
   const theme = useTheme();
@@ -34,12 +33,6 @@ export default function GoalFormScreen() {
   const [targetDate, setTargetDate] = useState<Date | undefined>(
     existing?.targetDate ? new Date(existing.targetDate) : undefined
   );
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
-  const onChangeDate = (_event: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === 'android') setShowDatePicker(false);
-    if (selected) setTargetDate(selected);
-  };
 
   const handleSubmit = async () => {
     const trimmedName = name.trim();
@@ -47,15 +40,15 @@ export default function GoalFormScreen() {
     const parsedCurrent = parseFloat((currentAmount || '0').replace(',', '.'));
 
     if (!trimmedName) {
-      Alert.alert('Eksik bilgi', 'Lütfen bir hedef ismi gir.');
+      showAlert('Eksik bilgi', 'Lütfen bir hedef ismi gir.');
       return;
     }
     if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) {
-      Alert.alert('Geçersiz tutar', 'Lütfen geçerli bir hedef tutar gir.');
+      showAlert('Geçersiz tutar', 'Lütfen geçerli bir hedef tutar gir.');
       return;
     }
     if (!Number.isFinite(parsedCurrent) || parsedCurrent < 0) {
-      Alert.alert('Geçersiz tutar', 'Lütfen geçerli bir birikim tutarı gir.');
+      showAlert('Geçersiz tutar', 'Lütfen geçerli bir birikim tutarı gir.');
       return;
     }
 
@@ -77,17 +70,10 @@ export default function GoalFormScreen() {
 
   const handleDelete = () => {
     if (!existing) return;
-    Alert.alert('Hedefi sil', `"${existing.name}" hedefini silmek istiyor musun?`, [
-      { text: 'Vazgeç', style: 'cancel' },
-      {
-        text: 'Sil',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteGoal(existing.id);
-          router.back();
-        },
-      },
-    ]);
+    confirmDestructive('Hedefi sil', `"${existing.name}" hedefini silmek istiyor musun?`, async () => {
+      await deleteGoal(existing.id);
+      router.back();
+    });
   };
 
   return (
@@ -159,31 +145,15 @@ export default function GoalFormScreen() {
 
           <View style={styles.field}>
             <Text style={[styles.label, { color: theme.subtext }]}>Hedef Tarih (opsiyonel)</Text>
-            <Pressable
-              onPress={() => setShowDatePicker(true)}
-              style={[styles.input, { borderColor: theme.border, backgroundColor: theme.card }]}
-            >
-              <Text style={{ color: targetDate ? theme.text : theme.subtext }}>
-                {targetDate ? formatDate(targetDate.toISOString()) : 'Tarih seç'}
-              </Text>
-            </Pressable>
+            <DateField
+              value={targetDate}
+              onChange={setTargetDate}
+              minimumDate={new Date()}
+              accentColor={theme.primary}
+            />
             {targetDate && (
               <Pressable onPress={() => setTargetDate(undefined)} style={{ alignSelf: 'flex-start' }}>
                 <Text style={{ color: theme.expense, fontSize: 12, fontWeight: '600' }}>Tarihi kaldır</Text>
-              </Pressable>
-            )}
-            {showDatePicker && (
-              <DateTimePicker
-                value={targetDate ?? new Date()}
-                mode="date"
-                minimumDate={new Date()}
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={onChangeDate}
-              />
-            )}
-            {Platform.OS === 'ios' && showDatePicker && (
-              <Pressable onPress={() => setShowDatePicker(false)} style={styles.doneBtn}>
-                <Text style={{ color: theme.primary, fontWeight: '700' }}>Tamam</Text>
               </Pressable>
             )}
           </View>
@@ -225,7 +195,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconChipText: { fontSize: 20 },
-  doneBtn: { alignSelf: 'flex-end', paddingVertical: 8 },
   submitBtn: { borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
   submitText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   deleteBtn: { alignItems: 'center', paddingVertical: 8 },

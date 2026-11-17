@@ -1,7 +1,8 @@
 import React from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Transaction } from '@/types';
+import { confirmDestructive } from '@/lib/dialog';
 import { getCategoryById } from '@/lib/categories';
 import { formatCurrency, formatDayMonth, getCurrentPeriod, getDueDateForPeriod } from '@/lib/date';
 import { useTheme } from '@/hooks/useTheme';
@@ -19,12 +20,12 @@ export function BillRow({ transaction, paid, onPress, onDelete, onTogglePaid }: 
   const category = getCategoryById(transaction.categoryId);
   const dueDate = transaction.dueDay ? getDueDateForPeriod(transaction.dueDay, getCurrentPeriod()) : null;
 
-  const handleLongPress = () => {
-    Alert.alert('Kaydı sil', `"${transaction.name}" tekrarlayan ödemesini silmek istiyor musun?`, [
-      { text: 'Vazgeç', style: 'cancel' },
-      { text: 'Sil', style: 'destructive', onPress: onDelete },
-    ]);
-  };
+  const handleLongPress = () =>
+    confirmDestructive(
+      'Kaydı sil',
+      `"${transaction.name}" tekrarlayan ödemesini silmek istiyor musun?`,
+      onDelete
+    );
 
   return (
     <Pressable

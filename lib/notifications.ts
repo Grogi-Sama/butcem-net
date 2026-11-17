@@ -20,6 +20,8 @@ Notifications.setNotificationHandler({
 });
 
 export async function ensureNotificationSetup(): Promise<boolean> {
+  // Scheduled local notifications aren't supported in browsers.
+  if (Platform.OS === 'web') return false;
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
       name: 'Ödeme Hatırlatmaları',

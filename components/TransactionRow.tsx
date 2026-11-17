@@ -1,7 +1,8 @@
 import React from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Transaction } from '@/types';
+import { confirmDestructive } from '@/lib/dialog';
 import { getCategoryById } from '@/lib/categories';
 import { formatCurrency, formatDate } from '@/lib/date';
 import { useTheme } from '@/hooks/useTheme';
@@ -19,12 +20,8 @@ export function TransactionRow({ transaction, onPress, onDelete }: Props) {
   const amountColor = isIncome ? theme.income : theme.expense;
   const iconBg = isIncome ? theme.incomeSoft : theme.expenseSoft;
 
-  const handleLongPress = () => {
-    Alert.alert('Kaydı sil', `"${transaction.name}" kaydını silmek istiyor musun?`, [
-      { text: 'Vazgeç', style: 'cancel' },
-      { text: 'Sil', style: 'destructive', onPress: onDelete },
-    ]);
-  };
+  const handleLongPress = () =>
+    confirmDestructive('Kaydı sil', `"${transaction.name}" kaydını silmek istiyor musun?`, onDelete);
 
   return (
     <Pressable

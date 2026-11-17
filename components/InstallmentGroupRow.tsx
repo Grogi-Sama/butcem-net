@@ -1,6 +1,7 @@
 import React from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { InstallmentGroup } from '@/lib/installments';
+import { confirmDestructive } from '@/lib/dialog';
 import { getCategoryById } from '@/lib/categories';
 import { formatCurrency } from '@/lib/date';
 import { useTheme } from '@/hooks/useTheme';
@@ -15,16 +16,12 @@ export function InstallmentGroupRow({ group, onDelete }: Props) {
   const category = getCategoryById(group.categoryId);
   const completed = group.paidCount >= group.totalCount;
 
-  const handleLongPress = () => {
-    Alert.alert(
+  const handleLongPress = () =>
+    confirmDestructive(
       'Taksitli harcamayı sil',
       `"${group.name}" için tüm taksitler (${group.totalCount} adet) silinecek. Emin misin?`,
-      [
-        { text: 'Vazgeç', style: 'cancel' },
-        { text: 'Sil', style: 'destructive', onPress: onDelete },
-      ]
+      onDelete
     );
-  };
 
   return (
     <Pressable onLongPress={handleLongPress} style={[styles.row, { borderColor: theme.border }]}>

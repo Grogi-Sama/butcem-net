@@ -39,6 +39,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "web:preview": "node scripts/start-web.js",
     "lint": "expo lint"
   },
   "private": true

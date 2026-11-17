@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -55,6 +55,15 @@ export default function DashboardScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={[styles.periodLabel, { color: theme.subtext }]}>{periodLabel(period)}</Text>
+
+        {Platform.OS === 'web' && (
+          <View style={[styles.webNote, { backgroundColor: theme.warningSoft }]}>
+            <Ionicons name="information-circle" size={18} color={theme.warning} />
+            <Text style={[styles.webNoteText, { color: theme.text }]}>
+              Tarayıcı sürümünde ödeme bildirimleri çalışmaz. Verilerin yalnızca bu cihazdaki tarayıcıda saklanır.
+            </Text>
+          </View>
+        )}
 
         <Card style={[styles.balanceCard, { backgroundColor: theme.primary }]}>
           <Text style={styles.balanceLabel}>Bakiye</Text>
@@ -265,6 +274,8 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 32, gap: 16 },
+  webNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 12, borderRadius: 12 },
+  webNoteText: { flex: 1, fontSize: 12, lineHeight: 17 },
   periodLabel: { fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
   balanceCard: { gap: 8 },
   balanceLabel: { color: '#e0e7ff', fontSize: 13, fontWeight: '600' },

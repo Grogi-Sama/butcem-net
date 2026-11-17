@@ -1,6 +1,7 @@
 import React from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SavingsGoal } from '@/types';
+import { confirmDestructive } from '@/lib/dialog';
 import { formatCurrency, formatDate } from '@/lib/date';
 import { useTheme } from '@/hooks/useTheme';
 import { Card } from '@/components/ui/Card';
@@ -17,12 +18,8 @@ export function GoalCard({ goal, onPress, onDelete }: Props) {
   const completed = progress >= 1;
   const remaining = Math.max(0, goal.targetAmount - goal.currentAmount);
 
-  const handleLongPress = () => {
-    Alert.alert('Hedefi sil', `"${goal.name}" hedefini silmek istiyor musun?`, [
-      { text: 'Vazgeç', style: 'cancel' },
-      { text: 'Sil', style: 'destructive', onPress: onDelete },
-    ]);
-  };
+  const handleLongPress = () =>
+    confirmDestructive('Hedefi sil', `"${goal.name}" hedefini silmek istiyor musun?`, onDelete);
 
   return (
     <Pressable onPress={onPress} onLongPress={handleLongPress}>

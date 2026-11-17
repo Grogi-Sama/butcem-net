@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,13 +11,13 @@ import {
   View,
 } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppData } from '@/context/AppDataContext';
 import { useTheme } from '@/hooks/useTheme';
 import { getCategoriesByType } from '@/lib/categories';
-import { formatDate } from '@/lib/date';
+import { DateField } from '@/components/DateField';
+import { confirmDestructive, showAlert } from '@/lib/dialog';
 import { TransactionType } from '@/types';
 
 export default function TransactionFormScreen() {
@@ -38,16 +37,10 @@ export default function TransactionFormScreen() {
   const [note, setNote] = useState(existing?.note ?? '');
   const [isRecurring, setIsRecurring] = useState(existing?.isRecurring ?? false);
   const [dueDay, setDueDay] = useState(existing?.dueDay ? String(existing.dueDay) : '');
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const isIncome = type === 'income';
   const accent = isIncome ? theme.income : theme.expense;
   const accentSoft = isIncome ? theme.incomeSoft : theme.expenseSoft;
-
-  const onChangeDate = (_event: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === 'android') setShowDatePicker(false);
-    if (selected) setDate(selected);
-  };
 
   const handleSubmit = async () => {
     const trimmedName = name.trim();
@@ -55,19 +48,19 @@ export default function TransactionFormScreen() {
     const parsedDueDay = parseInt(dueDay, 10);
 
     if (!trimmedName) {
-      Alert.alert('Eksik bilgi', 'Lütfen bir isim gir.');
+      showAlert('Eksik bilgi', 'Lütfen bir isim gir.');
       return;
     }
     if (!categoryId) {
-      Alert.alert('Eksik bilgi', 'Lütfen bir tür seç.');
+      showAlert('Eksik bilgi', 'Lütfen bir tür seç.');
       return;
     }
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      Alert.alert('Geçersiz tutar', 'Lütfen geçerli bir tutar gir.');
+      showAlert('Geçersiz tutar', 'Lütfen geçerli bir tutar gir.');
       return;
     }
     if (isRecurring && (!Number.isInteger(parsedDueDay) || parsedDueDay < 1 || parsedDueDay > 31)) {
-      Alert.alert('Geçersiz ödeme günü', 'Ödeme günü 1 ile 31 arasında olmalı.');
+      showAlert('Geçersiz ödeme günü', 'Ödeme günü 1 ile 31 arasında olmalı.');
       return;
     }
 
@@ -92,17 +85,10 @@ export default function TransactionFormScreen() {
 
   const handleDelete = () => {
     if (!existing) return;
-    Alert.alert('Kaydı sil', `"${existing.name}" kaydını silmek istiyor musun?`, [
-      { text: 'Vazgeç', style: 'cancel' },
-      {
-        text: 'Sil',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteTransaction(existing.id);
-          router.back();
-        },
-      },
-    ]);
+    confirmDestructive('Kaydı sil', `"${existing.name}" kaydını silmek istiyor musun?`, async () => {
+      await deleteTransaction(existing.id);
+      router.back();
+    });
   };
 
   return (
@@ -200,25 +186,7 @@ export default function TransactionFormScreen() {
           ) : (
             <View style={styles.field}>
               <Text style={[styles.label, { color: theme.subtext }]}>Tarih</Text>
-              <Pressable
-                onPress={() => setShowDatePicker(true)}
-                style={[styles.input, { borderColor: theme.border, backgroundColor: theme.card }]}
-              >
-                <Text style={{ color: theme.text }}>{formatDate(date.toISOString())}</Text>
-              </Pressable>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={date}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={onChangeDate}
-                />
-              )}
-              {Platform.OS === 'ios' && showDatePicker && (
-                <Pressable onPress={() => setShowDatePicker(false)} style={styles.doneBtn}>
-                  <Text style={{ color: accent, fontWeight: '700' }}>Tamam</Text>
-                </Pressable>
-              )}
+              <DateField value={date} onChange={setDate} accentColor={accent} />
             </View>
           )}
 
@@ -279,7 +247,6 @@ const styles = StyleSheet.create({
   chipIcon: { fontSize: 14 },
   chipText: { fontSize: 13, fontWeight: '600' },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  doneBtn: { alignSelf: 'flex-end', paddingVertical: 8 },
   submitBtn: { borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
   submitText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   deleteBtn: { alignItems: 'center', paddingVertical: 8 },

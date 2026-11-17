@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,13 +10,14 @@ import {
   View,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppData } from '@/context/AppDataContext';
 import { useTheme } from '@/hooks/useTheme';
 import { getCategoriesByType } from '@/lib/categories';
-import { formatCurrency, formatDate } from '@/lib/date';
+import { DateField } from '@/components/DateField';
+import { showAlert } from '@/lib/dialog';
+import { formatCurrency } from '@/lib/date';
 
 export default function InstallmentFormScreen() {
   const theme = useTheme();
@@ -29,35 +29,29 @@ export default function InstallmentFormScreen() {
   const [installmentCount, setInstallmentCount] = useState('3');
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [startDate, setStartDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const parsedTotal = parseFloat(totalAmount.replace(',', '.'));
   const parsedCount = parseInt(installmentCount, 10);
   const monthlyPreview =
     Number.isFinite(parsedTotal) && parsedCount > 0 ? parsedTotal / parsedCount : undefined;
 
-  const onChangeDate = (_event: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === 'android') setShowDatePicker(false);
-    if (selected) setStartDate(selected);
-  };
-
   const handleSubmit = async () => {
     const trimmedName = name.trim();
 
     if (!trimmedName) {
-      Alert.alert('Eksik bilgi', 'Lütfen bir isim gir.');
+      showAlert('Eksik bilgi', 'Lütfen bir isim gir.');
       return;
     }
     if (!categoryId) {
-      Alert.alert('Eksik bilgi', 'Lütfen bir tür seç.');
+      showAlert('Eksik bilgi', 'Lütfen bir tür seç.');
       return;
     }
     if (!Number.isFinite(parsedTotal) || parsedTotal <= 0) {
-      Alert.alert('Geçersiz tutar', 'Lütfen geçerli bir toplam tutar gir.');
+      showAlert('Geçersiz tutar', 'Lütfen geçerli bir toplam tutar gir.');
       return;
     }
     if (!Number.isInteger(parsedCount) || parsedCount < 2 || parsedCount > 36) {
-      Alert.alert('Geçersiz taksit sayısı', 'Taksit sayısı 2 ile 36 arasında olmalı.');
+      showAlert('Geçersiz taksit sayısı', 'Taksit sayısı 2 ile 36 arasında olmalı.');
       return;
     }
 
@@ -148,25 +142,11 @@ export default function InstallmentFormScreen() {
 
           <View style={styles.field}>
             <Text style={[styles.label, { color: theme.subtext }]}>İlk Taksit Tarihi</Text>
-            <Pressable
-              onPress={() => setShowDatePicker(true)}
-              style={[styles.input, { borderColor: theme.border, backgroundColor: theme.card }]}
-            >
-              <Text style={{ color: theme.text }}>{formatDate(startDate.toISOString())}</Text>
-            </Pressable>
-            {showDatePicker && (
-              <DateTimePicker
-                value={startDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={onChangeDate}
-              />
-            )}
-            {Platform.OS === 'ios' && showDatePicker && (
-              <Pressable onPress={() => setShowDatePicker(false)} style={styles.doneBtn}>
-                <Text style={{ color: theme.expense, fontWeight: '700' }}>Tamam</Text>
-              </Pressable>
-            )}
+            <DateField
+              value={startDate}
+              onChange={setStartDate}
+              accentColor={theme.expense}
+            />
             <Text style={[styles.hint, { color: theme.subtext }]}>
               Taksitler bu tarihten başlayarak her ay otomatik olarak gider listene eklenir.
             </Text>
@@ -205,7 +185,6 @@ const styles = StyleSheet.create({
   },
   chipIcon: { fontSize: 14 },
   chipText: { fontSize: 13, fontWeight: '600' },
-  doneBtn: { alignSelf: 'flex-end', paddingVertical: 8 },
   submitBtn: { borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
   submitText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });
